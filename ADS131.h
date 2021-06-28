@@ -4,10 +4,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-// SPI Configuration : 8Bits, CPOL=LOW(0), CPHA=2EDGE(1), Max speed: 15MHz
-#define Delay_US(x) // Place your delay function in microseconds
-#define Debug_Enable // Uncomment if you want to use
-
+/// SPI Configuration : 8Bits, CPOL=LOW(0), CPHA=2EDGE(1), Max speed: 15MHz
+#define Delay_US(x)                                         // Place your delay function in microseconds
+#define Debug_Enable                                        // Uncomment if you want to use (depends on printf in stdio.h)
+#define ADCValueToVoltage(x) (x * 2.4 /*VREFF*/ / 0x7FFFFF) // Use this to conver ADC value to Voltage
 
 // Input Values :
 typedef struct ADS131_Handler_s {
@@ -65,7 +65,6 @@ typedef struct ADS131_Parameters_s {
   // 1: Enable op amp
   bool OpAmpPowerDown;
 } ADS131_Parameters;
-
 typedef enum ADS131_PGAgain_e {
   _01_ = 1, // Gain  1
   _02_ = 2, // Gain  2
@@ -230,11 +229,9 @@ typedef struct ADS131_GPIOConfig_s {
   bool GPIO4High;
 } ADS131_GPIOConfig;
 
-
 // Public Functions :
-
 /* ADS131_Init :
- * @note: Default in Continuous Mode, 1kSPS and VREFF:2.4V | Fault Thershold is set to High-side: 95%, Low-side 5% (default)
+* @note: Default in Continuous Mode, 1kSPS and VREFF:2.4V | Fault Thershold is set to High-side: 95%, Low-side 5% (default)
  */
 void ADS131_Init(ADS131_Handler *ADC_Handler, ADS131_Parameters *Parameters, ADS131_ChannelsConfig *ChannelsConfig, ADS131_GPIOConfig *GPIOConfig);
 
