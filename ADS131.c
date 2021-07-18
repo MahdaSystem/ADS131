@@ -258,14 +258,14 @@ void ADS131_ReadData(ADS131_Handler *ADC_Handler, uint8_t *State /* 3 Elements (
   ChannelsData[7].Part1 = ADC_Handler->ADC_Receive();
   Delay_US(5);
 	ADC_Handler->ADC_CS_HIGH();
-  ChSamples[0] = ChannelsData[0].INT32 / 255; 
-  ChSamples[1] = ChannelsData[1].INT32 / 255; 
-  ChSamples[2] = ChannelsData[2].INT32 / 255; 
-  ChSamples[3] = ChannelsData[3].INT32 / 255; 
-  ChSamples[4] = ChannelsData[4].INT32 / 255; 
-  ChSamples[5] = ChannelsData[5].INT32 / 255; 
-  ChSamples[6] = ChannelsData[6].INT32 / 255; 
-  ChSamples[7] = ChannelsData[7].INT32 / 255; 
+  ChSamples[0] = ChannelsData[0].INT32 / 256; 
+  ChSamples[1] = ChannelsData[1].INT32 / 256; 
+  ChSamples[2] = ChannelsData[2].INT32 / 256; 
+  ChSamples[3] = ChannelsData[3].INT32 / 256; 
+  ChSamples[4] = ChannelsData[4].INT32 / 256; 
+  ChSamples[5] = ChannelsData[5].INT32 / 256; 
+  ChSamples[6] = ChannelsData[6].INT32 / 256; 
+  ChSamples[7] = ChannelsData[7].INT32 / 256; 
 }
 
 void ADS131_ConfigGPIO(ADS131_Handler *ADC_Handler,ADS131_GPIOConfig *GPIOConfig)

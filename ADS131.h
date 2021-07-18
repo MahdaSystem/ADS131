@@ -13,8 +13,8 @@
 typedef struct ADS131_Handler_s {
   void (*ADC_CS_HIGH)(void);          // Must be initialized
   void (*ADC_CS_LOW)(void);           // Must be initialized
-  void (*ADC_START_HIGH)(void);       // If you don't want to use this, the START pin must be pulled down then pass this as NULL
-  void (*ADC_START_LOW)(void);        // If you don't want to use this, the START pin must be pulled down then pass this as NULL
+  void (*ADC_START_HIGH)(void);       // If you don't want to use software start, the START pin must be pulled down then pass this as NULL
+  void (*ADC_START_LOW)(void);        // If you don't want to use software start, the START pin must be pulled down then pass this as NULL
   void (*ADC_RESET_HIGH)(void);       // If you want to use software reset, the RESET pin must be pulled up then pass this as NULL
   void (*ADC_RESET_LOW)(void);        // If you want to use software reset, the RESET pin must be pulled up then pass this as NULL
   void (*ADC_Transmit)(uint8_t Data); // Must be initialized
