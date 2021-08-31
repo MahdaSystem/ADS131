@@ -5,9 +5,21 @@
 #include <stdint.h>
 
 /// SPI Configuration : 8Bits, CPOL=LOW(0), CPHA=2EDGE(1), Max speed: 15MHz
-#define Delay_US(x)                                         // Place your delay function in microseconds
+#define USE_MACRO_DELAY         1                           // 0: Use handler delay ,So you have to set ADC_Delay_US in Handler | 1: use Macro delay, So you have to set MACRO_DELAY_US Macro
+//#define MACRO_DELAY_US(x)                                   // If you want to use Macro delay, place your delay function in microseconds here
 #define Debug_Enable                                        // Uncomment if you want to use (depends on printf in stdio.h)
 #define ADCValueToVoltage(x) (x * 2.4 /*VREFF*/ / 0x7FFFFF) // Use this to conver ADC value to Voltage
+
+
+// Delay configuration: (DO NOT EDIT THIS BLOCK)
+#if USE_MACRO_DELAY == 0
+#define Delay_US(x)   ADS131_Handler->ADC_Delay_US(x)
+#else
+#define Delay_US(x)   MACRO_DELAY_US(x)
+#ifndef MACRO_DELAY_US
+#error "MACRO_DELAY_US is not defined. Please Use handler delay or config MACRO_DELAY_US macro, You can choose it on USE_MACRO_DELAY define"
+#endif
+#endif
 
 // Input Values :
 typedef struct ADS131_Handler_s {
@@ -20,6 +32,7 @@ typedef struct ADS131_Handler_s {
   void (*ADC_Transmit)(uint8_t Data); // Must be initialized
   uint8_t (*ADC_Receive)(void);       // Must be initialized
   uint8_t (*ADC_DRDY_Read)(void);     // Can be initialized
+  void (*ADC_Delay_US)(uint32_t);     // If you want to use Macro delay, you have to enable - define, Otherwise This function must be initialized!
 } ADS131_Handler;
 
 typedef enum ADS131_DataRate_e {
