@@ -1,13 +1,42 @@
+/**
+ **********************************************************************************
+ * @file   ADS131.c
+ * @author Ali Moallem (https://github.com/AliMoal)
+ * @brief  
+ *         Functionalities of the this file:
+ *          + 
+ *          + 
+ *          + 
+ **********************************************************************************
+ *
+ *! Copyright (c) 2021 Mahda Embedded System (MIT License)
+ *!
+ *! Permission is hereby granted, free of charge, to any person obtaining a copy
+ *! of this software and associated documentation files (the "Software"), to deal
+ *! in the Software without restriction, including without limitation the rights
+ *! to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *! copies of the Software, and to permit persons to whom the Software is
+ *! furnished to do so, subject to the following conditions:
+ *!
+ *! The above copyright notice and this permission notice shall be included in all
+ *! copies or substantial portions of the Software.
+ *!
+ *! THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *! IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *! FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *! AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *! LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *! OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *! SOFTWARE.
+ *!
+ **********************************************************************************
+ **/
+
+//* Private Includes -------------------------------------------------------------- //
 #include "ADS131.h"
 
+//* Private Defines and Macros ---------------------------------------------------- //
 #define ADS131_RawToAdcValue(oneData) ((int32_t)(((oneData[0] << 16) | (oneData[1] << 8) | (oneData[2])) << 8) / 256)
-#ifdef Debug_Enable
-#include <stdio.h> // for debug
-#define PROGRAMLOG(arg...) printf(arg)
-#else
-#define PROGRAMLOG(arg...)
-#endif
-
 #define EnableRegistersInContinuousMode() 	ADC_Handler->ADC_CS_LOW(); \
                                             Delay_US(5); \
                                             ADC_Handler->ADC_Transmit(STOP); \
@@ -28,7 +57,22 @@
                                             Delay_US(5)
 
 
-typedef enum ADS131Commands_s {
+//* Others ------------------------------------------------------------------------ //
+#ifdef Debug_Enable
+#include <stdio.h> // for debug
+#define PROGRAMLOG(arg...) printf(arg)
+#else
+#define PROGRAMLOG(arg...)
+#endif
+
+/**
+ ** ==================================================================================
+ **                                ##### Enums #####                               
+ ** ==================================================================================
+ **/
+
+typedef enum
+ADS131Commands_s {
 	// SYSTEM COMMANDS
 	WAKEUP		 		= 0x02,	// Wake-up from standby mode
 	STANDBY		 		=	0x04, // Enter standby mode
@@ -45,7 +89,8 @@ typedef enum ADS131Commands_s {
 	WREG					= 0x40	// Write registers
 } ADS131Commands;
 
-typedef enum ADS131Register_s {
+typedef enum
+ADS131Register_s {
 	// DEVICE SETTINGS (Read-Only Registers)
 	ID						=	0x00, // RESET VALUE: 0xD2
 	// GLOBAL SETTINGS ACROSS CHANNELS
@@ -69,20 +114,14 @@ typedef enum ADS131Register_s {
 	GPIO					= 0x14	// RESET VALUE: 0x0F
 } ADS131Register;
 
-#pragma anon_unions
-typedef union ADS131_OneSample_u {
-  struct {
-    uint32_t Zero :8; // Always Zero
-    uint32_t Part1:8;
-    uint32_t Part2:8;
-    uint32_t Part3:8;
-  };
-  int32_t INT32;
-} ADS131_OneSample;
+/**
+ *! ==================================================================================
+ *!                          ##### Private Functions #####                               
+ *! ==================================================================================
+ **/
 
-static ADS131_OneSample ChannelsData[8] = {0};
-
-static uint8_t ADS131_ReadReg (ADS131_Handler *ADC_Handler,ADS131Register ADS131REG)
+static uint8_t
+ADS131_ReadReg (ADS131_Handler *ADC_Handler,ADS131Register ADS131REG)
 {
 	uint8_t RecByte = 0;
 	ADC_Handler->ADC_CS_LOW();
@@ -97,7 +136,8 @@ static uint8_t ADS131_ReadReg (ADS131_Handler *ADC_Handler,ADS131Register ADS131
 	return RecByte;
 };
 
-static void ADS131_WriteReg (ADS131_Handler *ADC_Handler,ADS131Register ADS131REG, uint8_t RegisterValue)
+static void
+ADS131_WriteReg (ADS131_Handler *ADC_Handler,ADS131Register ADS131REG, uint8_t RegisterValue)
 {
 	ADC_Handler->ADC_CS_LOW();
 	Delay_US(5);
@@ -110,7 +150,23 @@ static void ADS131_WriteReg (ADS131_Handler *ADC_Handler,ADS131Register ADS131RE
 	ADC_Handler->ADC_CS_HIGH();
 };
 
-void ADS131_Init(ADS131_Handler *ADC_Handler, ADS131_Parameters *Parameters, ADS131_ChannelsConfig *ChannelsConfig, ADS131_GPIOConfig *GPIOConfig)
+/**
+ ** ==================================================================================
+ **                           ##### Public Functions #####                               
+ ** ==================================================================================
+ **/
+
+/**
+ * @brief  Initializes The ADC and Library
+ * @note   Defaults in Continuous Mode, 1kSPS and VREFF:2.4V, Fault Thershold is set to High-side: 95%, Low-side 5%
+ * @param  ADC_Handler:     Pointer Of Library Handler
+ * @param  Parameters:      Pointer Of ADC Parameters
+ * @param  ChannelsConfig:  Pointer Of Channels Configurations
+ * @param  GPIOConfig:      Pointer Of GPIO Configurations
+ * @retval None
+ */
+void
+ADS131_Init(ADS131_Handler *ADC_Handler, ADS131_Parameters *Parameters, ADS131_ChannelsConfig *ChannelsConfig, ADS131_GPIOConfig *GPIOConfig)
 {
   if (!ADC_Handler)
      return;
@@ -199,7 +255,16 @@ void ADS131_Init(ADS131_Handler *ADC_Handler, ADS131_Parameters *Parameters, ADS
   DisableRegistersInContinuousMode();
 };
 
-void ADS131_ReadData(ADS131_Handler *ADC_Handler, uint8_t *State /* 3 Elements ([0]: MSB) */,int32_t *ChSamples /* 8 Elements ([0]: Ch1)*/)
+/**
+ * @brief  Reads ADC Data
+ * @note   Call This function when DRDY pin got LOW
+ * @param  ADC_Handler:    Pointer Of Library Handler
+ * @param  State:          Pointer Of ADC Statement    | 3 Elements ([0]: MSB)
+ * @param  ChSamples:      Pointer Of Channels Samples | 8 Elements ([0]: Ch1)
+ * @retval None
+ */
+void
+ADS131_ReadData(ADS131_Handler *ADC_Handler, uint8_t *State /* 3 Elements ([0]: MSB) */,int32_t *ChSamples /* 8 Elements ([0]: Ch1)*/)
 {
   ADC_Handler->ADC_CS_LOW();
   Delay_US(5);
@@ -268,7 +333,14 @@ void ADS131_ReadData(ADS131_Handler *ADC_Handler, uint8_t *State /* 3 Elements (
   ChSamples[7] = ChannelsData[7].INT32 / 256; 
 }
 
-void ADS131_ConfigGPIO(ADS131_Handler *ADC_Handler,ADS131_GPIOConfig *GPIOConfig)
+/**
+ * @brief  Configures GPIO Settings
+ * @param  ADC_Handler:   Pointer Of Library Handler
+ * @param  GPIOConfig:    Pointer Of GPIOs Configurations
+ * @retval None
+ */
+void
+ADS131_ConfigGPIO(ADS131_Handler *ADC_Handler,ADS131_GPIOConfig *GPIOConfig)
 {
   if((!GPIOConfig) || (!ADC_Handler))
     return;
@@ -282,7 +354,14 @@ void ADS131_ConfigGPIO(ADS131_Handler *ADC_Handler,ADS131_GPIOConfig *GPIOConfig
   DisableRegistersInContinuousMode();
 }
 
-void ADS131_ReadGPIO(ADS131_Handler *ADC_Handler, bool *GPIOstate /* 4 Element ([0]: GPIO1)*/)
+/**
+ * @brief  Reads GPIO Data
+ * @param  ADC_Handler:   Pointer Of Library Handler
+ * @param  GPIOstate:     Pointer Of GPIOs Statements | 4 Element ([0]: GPIO1)
+ * @retval None
+ */
+void
+ADS131_ReadGPIO(ADS131_Handler *ADC_Handler, bool *GPIOstate /* 4 Element ([0]: GPIO1)*/)
 {
   EnableRegistersInContinuousMode();
   uint8_t RegVal = ADS131_ReadReg(ADC_Handler,GPIO);
