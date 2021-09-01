@@ -87,7 +87,7 @@ ADS131Commands_s {
 	// REGISTER READ COMMANDS
 	RREG					= 0x20, // Read registers
 	WREG					= 0x40	// Write registers
-} ADS131Commands;
+} ADS131Commands_t;
 
 typedef enum
 ADS131Register_s {
@@ -112,7 +112,7 @@ ADS131Register_s {
 	FAULT_STATN		= 0x13, // RESET VALUE: 0x00
 	// GPIO SETTINGS
 	GPIO					= 0x14	// RESET VALUE: 0x0F
-} ADS131Register;
+} ADS131Register_t;
 
 /**
  *! ==================================================================================
@@ -121,7 +121,7 @@ ADS131Register_s {
  **/
 
 static uint8_t
-ADS131_ReadReg (ADS131_Handler *ADC_Handler,ADS131Register ADS131REG)
+ADS131_ReadReg (ADS131_Handler_t *ADC_Handler,ADS131Register_t ADS131REG)
 {
 	uint8_t RecByte = 0;
 	ADC_Handler->ADC_CS_LOW();
@@ -137,7 +137,7 @@ ADS131_ReadReg (ADS131_Handler *ADC_Handler,ADS131Register ADS131REG)
 };
 
 static void
-ADS131_WriteReg (ADS131_Handler *ADC_Handler,ADS131Register ADS131REG, uint8_t RegisterValue)
+ADS131_WriteReg (ADS131_Handler_t *ADC_Handler,ADS131Register_t ADS131REG, uint8_t RegisterValue)
 {
 	ADC_Handler->ADC_CS_LOW();
 	Delay_US(5);
@@ -166,7 +166,7 @@ ADS131_WriteReg (ADS131_Handler *ADC_Handler,ADS131Register ADS131REG, uint8_t R
  * @retval None
  */
 void
-ADS131_Init(ADS131_Handler *ADC_Handler, ADS131_Parameters *Parameters, ADS131_ChannelsConfig *ChannelsConfig, ADS131_GPIOConfig *GPIOConfig)
+ADS131_Init(ADS131_Handler_t *ADC_Handler, ADS131_Parameters_t *Parameters, ADS131_ChannelsConfig_t *ChannelsConfig, ADS131_GPIOConfig_t *GPIOConfig)
 {
   if (!ADC_Handler)
      return;
@@ -264,7 +264,7 @@ ADS131_Init(ADS131_Handler *ADC_Handler, ADS131_Parameters *Parameters, ADS131_C
  * @retval None
  */
 void
-ADS131_ReadData(ADS131_Handler *ADC_Handler, uint8_t *State /* 3 Elements ([0]: MSB) */,int32_t *ChSamples /* 8 Elements ([0]: Ch1)*/)
+ADS131_ReadData(ADS131_Handler_t *ADC_Handler, uint8_t *State /* 3 Elements ([0]: MSB) */,int32_t *ChSamples /* 8 Elements ([0]: Ch1)*/)
 {
   ADC_Handler->ADC_CS_LOW();
   Delay_US(5);
@@ -274,63 +274,63 @@ ADS131_ReadData(ADS131_Handler *ADC_Handler, uint8_t *State /* 3 Elements ([0]: 
   Delay_US(1);
   State[2] = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ChannelsData[0].Part3 = ADC_Handler->ADC_Receive();
+  ADC_Handler->ChannelsData[0].Part3 = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ChannelsData[0].Part2 = ADC_Handler->ADC_Receive();
+  ADC_Handler->ChannelsData[0].Part2 = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ChannelsData[0].Part1 = ADC_Handler->ADC_Receive();
+  ADC_Handler->ChannelsData[0].Part1 = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ChannelsData[1].Part3 = ADC_Handler->ADC_Receive();
+  ADC_Handler->ChannelsData[1].Part3 = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ChannelsData[1].Part2 = ADC_Handler->ADC_Receive();
+  ADC_Handler->ChannelsData[1].Part2 = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ChannelsData[1].Part1 = ADC_Handler->ADC_Receive();
+  ADC_Handler->ChannelsData[1].Part1 = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ChannelsData[2].Part3 = ADC_Handler->ADC_Receive();
+  ADC_Handler->ChannelsData[2].Part3 = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ChannelsData[2].Part2 = ADC_Handler->ADC_Receive();
+  ADC_Handler->ChannelsData[2].Part2 = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ChannelsData[2].Part1 = ADC_Handler->ADC_Receive();
+  ADC_Handler->ChannelsData[2].Part1 = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ChannelsData[3].Part3 = ADC_Handler->ADC_Receive();
+  ADC_Handler->ChannelsData[3].Part3 = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ChannelsData[3].Part2 = ADC_Handler->ADC_Receive();
+  ADC_Handler->ChannelsData[3].Part2 = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ChannelsData[3].Part1 = ADC_Handler->ADC_Receive();
+  ADC_Handler->ChannelsData[3].Part1 = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ChannelsData[4].Part3 = ADC_Handler->ADC_Receive();
+  ADC_Handler->ChannelsData[4].Part3 = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ChannelsData[4].Part2 = ADC_Handler->ADC_Receive();
+  ADC_Handler->ChannelsData[4].Part2 = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ChannelsData[4].Part1 = ADC_Handler->ADC_Receive();
+  ADC_Handler->ChannelsData[4].Part1 = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ChannelsData[5].Part3 = ADC_Handler->ADC_Receive();
+  ADC_Handler->ChannelsData[5].Part3 = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ChannelsData[5].Part2 = ADC_Handler->ADC_Receive();
+  ADC_Handler->ChannelsData[5].Part2 = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ChannelsData[5].Part1 = ADC_Handler->ADC_Receive();
+  ADC_Handler->ChannelsData[5].Part1 = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ChannelsData[6].Part3 = ADC_Handler->ADC_Receive();
+  ADC_Handler->ChannelsData[6].Part3 = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ChannelsData[6].Part2 = ADC_Handler->ADC_Receive();
+  ADC_Handler->ChannelsData[6].Part2 = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ChannelsData[6].Part1 = ADC_Handler->ADC_Receive();
+  ADC_Handler->ChannelsData[6].Part1 = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ChannelsData[7].Part3 = ADC_Handler->ADC_Receive();
+  ADC_Handler->ChannelsData[7].Part3 = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ChannelsData[7].Part2 = ADC_Handler->ADC_Receive();
+  ADC_Handler->ChannelsData[7].Part2 = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ChannelsData[7].Part1 = ADC_Handler->ADC_Receive();
+  ADC_Handler->ChannelsData[7].Part1 = ADC_Handler->ADC_Receive();
   Delay_US(5);
 	ADC_Handler->ADC_CS_HIGH();
-  ChSamples[0] = ChannelsData[0].INT32 / 256; 
-  ChSamples[1] = ChannelsData[1].INT32 / 256; 
-  ChSamples[2] = ChannelsData[2].INT32 / 256; 
-  ChSamples[3] = ChannelsData[3].INT32 / 256; 
-  ChSamples[4] = ChannelsData[4].INT32 / 256; 
-  ChSamples[5] = ChannelsData[5].INT32 / 256; 
-  ChSamples[6] = ChannelsData[6].INT32 / 256; 
-  ChSamples[7] = ChannelsData[7].INT32 / 256; 
+  ChSamples[0] = ADC_Handler->ChannelsData[0].INT32 / 256; 
+  ChSamples[1] = ADC_Handler->ChannelsData[1].INT32 / 256; 
+  ChSamples[2] = ADC_Handler->ChannelsData[2].INT32 / 256; 
+  ChSamples[3] = ADC_Handler->ChannelsData[3].INT32 / 256; 
+  ChSamples[4] = ADC_Handler->ChannelsData[4].INT32 / 256; 
+  ChSamples[5] = ADC_Handler->ChannelsData[5].INT32 / 256; 
+  ChSamples[6] = ADC_Handler->ChannelsData[6].INT32 / 256; 
+  ChSamples[7] = ADC_Handler->ChannelsData[7].INT32 / 256; 
 }
 
 /**
@@ -340,7 +340,7 @@ ADS131_ReadData(ADS131_Handler *ADC_Handler, uint8_t *State /* 3 Elements ([0]: 
  * @retval None
  */
 void
-ADS131_ConfigGPIO(ADS131_Handler *ADC_Handler,ADS131_GPIOConfig *GPIOConfig)
+ADS131_ConfigGPIO(ADS131_Handler_t *ADC_Handler,ADS131_GPIOConfig_t *GPIOConfig)
 {
   if((!GPIOConfig) || (!ADC_Handler))
     return;
@@ -361,7 +361,7 @@ ADS131_ConfigGPIO(ADS131_Handler *ADC_Handler,ADS131_GPIOConfig *GPIOConfig)
  * @retval None
  */
 void
-ADS131_ReadGPIO(ADS131_Handler *ADC_Handler, bool *GPIOstate /* 4 Element ([0]: GPIO1)*/)
+ADS131_ReadGPIO(ADS131_Handler_t *ADC_Handler, bool *GPIOstate /* 4 Element ([0]: GPIO1)*/)
 {
   EnableRegistersInContinuousMode();
   uint8_t RegVal = ADS131_ReadReg(ADC_Handler,GPIO);

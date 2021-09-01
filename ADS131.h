@@ -66,7 +66,8 @@ extern "C" {
 #endif
 #endif
 
-typedef union ADS131_OneSample_u {
+typedef union
+ADS131_OneSample_u {
   struct {
     uint32_t Zero :8; // Always Zero
     uint32_t Part1:8;
@@ -74,7 +75,7 @@ typedef union ADS131_OneSample_u {
     uint32_t Part3:8;
   };
   int32_t INT32;
-} ADS131_OneSample;
+} ADS131_OneSample_t;
 //! ------------------------------------------------------------------------------- //
 
 /**
@@ -95,7 +96,7 @@ ADS131_DataRate_e {
   _04kSPS_ = 4, //  4 KSPS | RESOLUTION: 24 Bits
   _02kSPS_ = 5, //  2 KSPS | RESOLUTION: 24 Bits
   _01KSPS_ = 6  //  1 KSPS | RESOLUTION: 24 Bits
-} ADS131_DataRate;
+} ADS131_DataRate_t;
 
 /**
  * @brief  Reference Voltage of ADC
@@ -104,7 +105,7 @@ typedef enum
 ADS131_IntRefVolt_e {
   _2V4_ = 0, // VREFP is set to 2.4 V
   _4V__ = 1  // VREFP is set to   4 V
-} ADS131_IntRefVolt;
+} ADS131_IntRefVolt_t;
 
 /**
  * @brief  Reference of OpAmp of ADC
@@ -113,7 +114,7 @@ typedef enum
 ADS131_OpAmpRef_e {
   TheOPAMPPpin = 0, // Noninverting input connected to the OPAMPP pin
   AVDD_AVSS_2 = 1   // Noninverting input connected to (AVDD + AVSS) / 2
-} ADS131_OpAmpRef;
+} ADS131_OpAmpRef_t;
 
 /**
  * @brief  PGA Gain of ADC
@@ -125,7 +126,7 @@ ADS131_PGAgain_e {
   _04_ = 4, // Gain  4
   _08_ = 5, // Gain  8
   _12_ = 6  // Gain 12
-} ADS131_PGAgain;
+} ADS131_PGAgain_t;
 
 /**
  * @brief  Input Multiplexer of ADC
@@ -137,7 +138,7 @@ ADS131_MUXChInput_e {
   MVDDSupply = 3,   // MVDD for supply measurement
   TempSensor = 4,   // Temperature sensor
   TestSignal = 5    // Test signal
-} ADS131_MUXChInput;
+} ADS131_MUXChInput_t;
 
 /**
  ** ==================================================================================
@@ -162,7 +163,7 @@ ADS131_Handler_s {
   uint8_t (*ADC_DRDY_Read)(void);     // Can be initialized 
   void (*ADC_Delay_US)(uint32_t);     //! Must be initialized If You do not use Macro Delay (Place here your delay in MicroSecond)
   ADS131_OneSample ChannelsData[8];   // !!! DO NOT USE OR EDIT THIS !!!
-} ADS131_Handler;
+} ADS131_Handler_t;
 
 /**
  * @brief  ADC Parameters
@@ -191,7 +192,7 @@ ADS131_Parameters_s {
   // 0: Power-down op amp
   // 1: Enable op amp
   bool OpAmpPowerDown;
-} ADS131_Parameters;
+} ADS131_Parameters_t;
 
 /**
  * @brief  Channels Configurations
@@ -294,7 +295,7 @@ ADS131_ChannelsConfig_s {
   // These bits determine the channel input selection.
   // See ADS131_MUXChInput enum
   ADS131_MUXChInput Ch8MUX;
-} ADS131_ChannelsConfig;
+} ADS131_ChannelsConfig_t;
 
 /**
  * @brief  GPIO Configurations
@@ -349,7 +350,7 @@ ADS131_GPIOConfig_s {
   // 0: LOW
   // 1: HIGH
   bool GPIO4High;
-} ADS131_GPIOConfig;
+} ADS131_GPIOConfig_t;
 
 /**
  ** ==================================================================================
@@ -367,7 +368,7 @@ ADS131_GPIOConfig_s {
  * @retval None
  */
 void
-ADS131_Init(ADS131_Handler *ADC_Handler, ADS131_Parameters *Parameters, ADS131_ChannelsConfig *ChannelsConfig, ADS131_GPIOConfig *GPIOConfig);
+ADS131_Init(ADS131_Handler_t *ADC_Handler, ADS131_Parameters_t *Parameters, ADS131_ChannelsConfig_t *ChannelsConfig, ADS131_GPIOConfig_t *GPIOConfig);
 
 /**
  * @brief  Reads ADC Data
@@ -378,7 +379,7 @@ ADS131_Init(ADS131_Handler *ADC_Handler, ADS131_Parameters *Parameters, ADS131_C
  * @retval None
  */
 void
-ADS131_ReadData(ADS131_Handler *ADC_Handler, uint8_t *State, int32_t *ChSamples);
+ADS131_ReadData(ADS131_Handler_t *ADC_Handler, uint8_t *State, int32_t *ChSamples);
 
 /**
  * @brief  Configures GPIO Settings
@@ -387,7 +388,7 @@ ADS131_ReadData(ADS131_Handler *ADC_Handler, uint8_t *State, int32_t *ChSamples)
  * @retval None
  */
 void
-ADS131_ConfigGPIO(ADS131_Handler *ADC_Handler, ADS131_GPIOConfig *GPIOConfig);
+ADS131_ConfigGPIO(ADS131_Handler_t *ADC_Handler, ADS131_GPIOConfig_t *GPIOConfig);
 
 /**
  * @brief  Reads GPIO Data
@@ -396,19 +397,19 @@ ADS131_ConfigGPIO(ADS131_Handler *ADC_Handler, ADS131_GPIOConfig *GPIOConfig);
  * @retval None
  */
 void
-ADS131_ReadGPIO(ADS131_Handler *ADC_Handler, bool *GPIOstate);
+ADS131_ReadGPIO(ADS131_Handler_t *ADC_Handler, bool *GPIOstate);
 
 //! NOT IMPLEMENTED YET ----------------------------------------------------------- //
 
-void ADS131_EnableStartContinuousMode(ADS131_Handler *ADC_Handler);
-void ADS131_StopDisableContinuousMode(ADS131_Handler *ADC_Handler);
-void ADS131_Config1(ADS131_Handler *ADC_Handler, bool DaisyChain, bool OscillatorClkOutput, ADS131_DataRate DataRate);
+void ADS131_EnableStartContinuousMode(ADS131_Handler_t *ADC_Handler);
+void ADS131_StopDisableContinuousMode(ADS131_Handler_t *ADC_Handler);
+void ADS131_Config1(ADS131_Handler_t *ADC_Handler, bool DaisyChain, bool OscillatorClkOutput, ADS131_DataRate_t DataRate);
 // void ADS131_Config2(ADS131_Handler *ADC_Handler); // Config2 is for Test!
-void ADS131_Config3(ADS131_Handler *ADC_Handler, ADS131_IntRefVolt IntRefVolt, ADS131_OpAmpRef OpAmpRef, bool OpAmpPowerDown);
-void ADS131_ChannelConfig(ADS131_Handler *ADC_Handler, uint8_t ChannelNumber /* 0xFF for ALL Channels */, ADS131_PGAgain PGAgain, ADS131_MUXChInput MUXChInput);
-void ADS131_StartConversion(ADS131_Handler *ADC_Handler);
-void ADS131_StopConversion(ADS131_Handler *ADC_Handler);
-void ADS131_ReadDataCommand(ADS131_Handler *ADC_Handler); // For non-Continuous Mode
+void ADS131_Config3(ADS131_Handler_t *ADC_Handler, ADS131_IntRefVolt_t IntRefVolt, ADS131_OpAmpRef_t OpAmpRef, bool OpAmpPowerDown);
+void ADS131_ChannelConfig(ADS131_Handler_t *ADC_Handler, uint8_t ChannelNumber /* 0xFF for ALL Channels */, ADS131_PGAgain_t PGAgain, ADS131_MUXChInput_t MUXChInput);
+void ADS131_StartConversion(ADS131_Handler_t *ADC_Handler);
+void ADS131_StopConversion(ADS131_Handler_t *ADC_Handler);
+void ADS131_ReadDataCommand(ADS131_Handler_t *ADC_Handler); // For non-Continuous Mode
 
 
 #ifdef __cplusplus
