@@ -9,7 +9,7 @@
  *          + 
  **********************************************************************************
  *
- *! Copyright (c) 2021 Mahda Embedded System (MIT License)
+ *! Copyright (c) 2024 Mahda Embedded System (MIT License)
  *!
  *! Permission is hereby granted, free of charge, to any person obtaining a copy
  *! of this software and associated documentation files (the "Software"), to deal
@@ -37,6 +37,13 @@
 
 //* Private Defines and Macros ---------------------------------------------------- //
 #define ADS131_RawToAdcValue(oneData) ((int32_t)(((oneData[0] << 16) | (oneData[1] << 8) | (oneData[2])) << 8) / 256)
+#ifdef Debug_Enable
+#include <stdio.h> // for debug
+#define PROGRAMLOG printf
+#else
+#define PROGRAMLOG
+#endif
+
 #define EnableRegistersInContinuousMode() 	ADC_Handler->ADC_CS_LOW(); \
                                             Delay_US(5); \
                                             ADC_Handler->ADC_Transmit(STOP); \
@@ -55,15 +62,6 @@
                                             Delay_US(5); \
                                             ADC_Handler->ADC_CS_HIGH(); \
                                             Delay_US(5)
-
-
-//* Others ------------------------------------------------------------------------ //
-#ifdef Debug_Enable
-#include <stdio.h> // for debug
-#define PROGRAMLOG(arg...) printf(arg)
-#else
-#define PROGRAMLOG(arg...)
-#endif
 
 /**
  ** ==================================================================================
@@ -87,7 +85,7 @@ ADS131Commands_s {
 	// REGISTER READ COMMANDS
 	RREG					= 0x20, // Read registers
 	WREG					= 0x40	// Write registers
-} ADS131Commands_t;
+} ADS131Commands;
 
 typedef enum
 ADS131Register_s {
@@ -112,7 +110,7 @@ ADS131Register_s {
 	FAULT_STATN		= 0x13, // RESET VALUE: 0x00
 	// GPIO SETTINGS
 	GPIO					= 0x14	// RESET VALUE: 0x0F
-} ADS131Register_t;
+} ADS131Register;
 
 /**
  *! ==================================================================================
@@ -120,8 +118,20 @@ ADS131Register_s {
  *! ==================================================================================
  **/
 
+#pragma anon_unions
+typedef union ADS131_OneSample_u {
+  struct {
+    uint32_t Zero :8; // Always Zero
+    uint32_t Part1:8;
+    uint32_t Part2:8;
+    uint32_t Part3:8;
+  };
+  int32_t INT32;
+} ADS131_OneSample;
+static ADS131_OneSample ChannelsData[8] = {0};
+
 static uint8_t
-ADS131_ReadReg (ADS131_Handler_t *ADC_Handler,ADS131Register_t ADS131REG)
+ADS131_ReadReg (ADS131_Handler *ADC_Handler,ADS131Register ADS131REG)
 {
 	uint8_t RecByte = 0;
 	ADC_Handler->ADC_CS_LOW();
@@ -137,7 +147,7 @@ ADS131_ReadReg (ADS131_Handler_t *ADC_Handler,ADS131Register_t ADS131REG)
 };
 
 static void
-ADS131_WriteReg (ADS131_Handler_t *ADC_Handler,ADS131Register_t ADS131REG, uint8_t RegisterValue)
+ADS131_WriteReg (ADS131_Handler *ADC_Handler,ADS131Register ADS131REG, uint8_t RegisterValue)
 {
 	ADC_Handler->ADC_CS_LOW();
 	Delay_US(5);
@@ -166,7 +176,7 @@ ADS131_WriteReg (ADS131_Handler_t *ADC_Handler,ADS131Register_t ADS131REG, uint8
  * @retval None
  */
 void
-ADS131_Init(ADS131_Handler_t *ADC_Handler, ADS131_Parameters_t *Parameters, ADS131_ChannelsConfig_t *ChannelsConfig, ADS131_GPIOConfig_t *GPIOConfig)
+ADS131_Init(ADS131_Handler *ADC_Handler, ADS131_Parameters *Parameters, ADS131_ChannelsConfig *ChannelsConfig, ADS131_GPIOConfig *GPIOConfig)
 {
   if (!ADC_Handler)
      return;
@@ -189,7 +199,9 @@ ADS131_Init(ADS131_Handler_t *ADC_Handler, ADS131_Parameters_t *Parameters, ADS1
   
 	EnableRegistersInContinuousMode();
   
-  PROGRAMLOG("ID: 0x%X\r\n",ADS131_ReadReg(ADC_Handler,ID));
+  #if Debug_Enable
+  PROGRAMLOG("ID: 0x%X\r\n", ADS131_ReadReg(ADC_Handler,ID));
+  #endif /* Debug_Enable */
   
   uint8_t RegVal = 0;
   
@@ -197,7 +209,10 @@ ADS131_Init(ADS131_Handler_t *ADC_Handler, ADS131_Parameters_t *Parameters, ADS1
   {
     RegVal = (0x90) | ((Parameters->DaisyChain ? 0 : 1) << 6) | (Parameters->OscillatorClkOutput << 5) | (Parameters->DataRate);
     ADS131_WriteReg(ADC_Handler,CONFIG1,RegVal);
+    
+    #if Debug_Enable
     PROGRAMLOG("CONFIG1: 0x%X\r\n",ADS131_ReadReg(ADC_Handler,CONFIG1));
+    #endif /* Debug_Enable */
     
 //    RegVal = 0;                                                              // for Test
 //    ADS131_WriteReg(ADC_Handler,CONFIG2,RegVal);                             // for Test
@@ -205,51 +220,88 @@ ADS131_Init(ADS131_Handler_t *ADC_Handler, ADS131_Parameters_t *Parameters, ADS1
     
     RegVal = (0xC0) | (Parameters->IntRefVolt << 5) | (Parameters->OpAmpRef << 3) | (Parameters->OpAmpPowerDown << 2);
     ADS131_WriteReg(ADC_Handler,CONFIG3,RegVal);
+    
+    #if Debug_Enable
     PROGRAMLOG("CONFIG3: 0x%X\r\n",ADS131_ReadReg(ADC_Handler,CONFIG3));
+    #endif /* Debug_Enable */
   }
   else
   {
     RegVal = 0x96; // 1kSPS
     ADS131_WriteReg(ADC_Handler,CONFIG1,RegVal);
+    
+    #if Debug_Enable
     PROGRAMLOG("CONFIG1 (default): 0x%X - Must be 0x96\r\n",ADS131_ReadReg(ADC_Handler,CONFIG1));
+    #endif /* Debug_Enable */
     RegVal = 0xC0; // VREFF: 2.4V
     ADS131_WriteReg(ADC_Handler,CONFIG3,RegVal);
+    
+    #if Debug_Enable
     PROGRAMLOG("CONFIG3 (default): 0x%X - Must be 0xC1 or 0xC0\r\n",ADS131_ReadReg(ADC_Handler,CONFIG3));
+    #endif /* Debug_Enable */
   }
   
   if (ChannelsConfig)
   {
     RegVal = (ChannelsConfig->Ch1PowerDown << 7) | (ChannelsConfig->Ch1PGA << 4) | (ChannelsConfig->Ch1MUX);
     ADS131_WriteReg(ADC_Handler,CH1SET,RegVal);
+    
+    #if Debug_Enable
     PROGRAMLOG("CH1SET: 0x%X\r\n",ADS131_ReadReg(ADC_Handler,CH1SET));
+    #endif /* Debug_Enable */
     RegVal = (ChannelsConfig->Ch2PowerDown << 7) | (ChannelsConfig->Ch2PGA << 4) | (ChannelsConfig->Ch2MUX);
     ADS131_WriteReg(ADC_Handler,CH2SET,RegVal);
+    
+    #if Debug_Enable
     PROGRAMLOG("CH2SET: 0x%X\r\n",ADS131_ReadReg(ADC_Handler,CH2SET));
+    #endif /* Debug_Enable */
+    
     RegVal = (ChannelsConfig->Ch3PowerDown << 7) | (ChannelsConfig->Ch3PGA << 4) | (ChannelsConfig->Ch3MUX);
     ADS131_WriteReg(ADC_Handler,CH3SET,RegVal);
+    
+    #if Debug_Enable
     PROGRAMLOG("CH3SET: 0x%X\r\n",ADS131_ReadReg(ADC_Handler,CH1SET));
+    #endif /* Debug_Enable */
     RegVal = (ChannelsConfig->Ch4PowerDown << 7) | (ChannelsConfig->Ch4PGA << 4) | (ChannelsConfig->Ch4MUX);
     ADS131_WriteReg(ADC_Handler,CH4SET,RegVal);
+    
+    #if Debug_Enable
     PROGRAMLOG("CH4SET: 0x%X\r\n",ADS131_ReadReg(ADC_Handler,CH4SET));
+    #endif /* Debug_Enable */
     RegVal = (ChannelsConfig->Ch5PowerDown << 7) | (ChannelsConfig->Ch5PGA << 4) | (ChannelsConfig->Ch5MUX);
     ADS131_WriteReg(ADC_Handler,CH5SET,RegVal);
+    
+    #if Debug_Enable
     PROGRAMLOG("CH5SET: 0x%X\r\n",ADS131_ReadReg(ADC_Handler,CH5SET));
+    #endif /* Debug_Enable */
     RegVal = (ChannelsConfig->Ch6PowerDown << 7) | (ChannelsConfig->Ch6PGA << 4) | (ChannelsConfig->Ch6MUX);
     ADS131_WriteReg(ADC_Handler,CH6SET,RegVal);
+    
+    #if Debug_Enable
     PROGRAMLOG("CH6SET: 0x%X\r\n",ADS131_ReadReg(ADC_Handler,CH6SET));
+    #endif /* Debug_Enable */
     RegVal = (ChannelsConfig->Ch7PowerDown << 7) | (ChannelsConfig->Ch7PGA << 4) | (ChannelsConfig->Ch7MUX);
     ADS131_WriteReg(ADC_Handler,CH7SET,RegVal);
+    
+    #if Debug_Enable
     PROGRAMLOG("CH7SET: 0x%X\r\n",ADS131_ReadReg(ADC_Handler,CH7SET));
+    #endif /* Debug_Enable */
     RegVal = (ChannelsConfig->Ch8PowerDown << 7) | (ChannelsConfig->Ch8PGA << 4) | (ChannelsConfig->Ch8MUX);
     ADS131_WriteReg(ADC_Handler,CH8SET,RegVal);
+    
+    #if Debug_Enable
     PROGRAMLOG("CH8SET: 0x%X\r\n",ADS131_ReadReg(ADC_Handler,CH8SET));
+    #endif /* Debug_Enable */
   }
   
   if(GPIOConfig)
   {
     RegVal = 0x50;//(GPIOConfig->GPIO4High << 7) | (GPIOConfig->GPIO3High << 6) | (GPIOConfig->GPIO2High << 5) | (GPIOConfig->GPIO1High << 4) |(GPIOConfig->GPIO4Input << 3) | (GPIOConfig->GPIO3Input << 2) | (GPIOConfig->GPIO2Input << 1) | (GPIOConfig->GPIO1Input);
     ADS131_WriteReg(ADC_Handler,GPIO,RegVal);
+    
+    #if Debug_Enable
     PROGRAMLOG("GPIO: 0x%X\r\n",ADS131_ReadReg(ADC_Handler,GPIO));
+    #endif /* Debug_Enable */
   }
   
   DisableRegistersInContinuousMode();
@@ -264,7 +316,7 @@ ADS131_Init(ADS131_Handler_t *ADC_Handler, ADS131_Parameters_t *Parameters, ADS1
  * @retval None
  */
 void
-ADS131_ReadData(ADS131_Handler_t *ADC_Handler, uint8_t *State /* 3 Elements ([0]: MSB) */,int32_t *ChSamples /* 8 Elements ([0]: Ch1)*/)
+ADS131_ReadData(ADS131_Handler *ADC_Handler, uint8_t *State /* 3 Elements ([0]: MSB) */,int32_t *ChSamples /* 8 Elements ([0]: Ch1)*/)
 {
   ADC_Handler->ADC_CS_LOW();
   Delay_US(5);
@@ -274,63 +326,63 @@ ADS131_ReadData(ADS131_Handler_t *ADC_Handler, uint8_t *State /* 3 Elements ([0]
   Delay_US(1);
   State[2] = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ADC_Handler->ChannelsData[0].Part3 = ADC_Handler->ADC_Receive();
+  ChannelsData[0].Part3 = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ADC_Handler->ChannelsData[0].Part2 = ADC_Handler->ADC_Receive();
+  ChannelsData[0].Part2 = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ADC_Handler->ChannelsData[0].Part1 = ADC_Handler->ADC_Receive();
+  ChannelsData[0].Part1 = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ADC_Handler->ChannelsData[1].Part3 = ADC_Handler->ADC_Receive();
+  ChannelsData[1].Part3 = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ADC_Handler->ChannelsData[1].Part2 = ADC_Handler->ADC_Receive();
+  ChannelsData[1].Part2 = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ADC_Handler->ChannelsData[1].Part1 = ADC_Handler->ADC_Receive();
+  ChannelsData[1].Part1 = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ADC_Handler->ChannelsData[2].Part3 = ADC_Handler->ADC_Receive();
+  ChannelsData[2].Part3 = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ADC_Handler->ChannelsData[2].Part2 = ADC_Handler->ADC_Receive();
+  ChannelsData[2].Part2 = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ADC_Handler->ChannelsData[2].Part1 = ADC_Handler->ADC_Receive();
+  ChannelsData[2].Part1 = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ADC_Handler->ChannelsData[3].Part3 = ADC_Handler->ADC_Receive();
+  ChannelsData[3].Part3 = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ADC_Handler->ChannelsData[3].Part2 = ADC_Handler->ADC_Receive();
+  ChannelsData[3].Part2 = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ADC_Handler->ChannelsData[3].Part1 = ADC_Handler->ADC_Receive();
+  ChannelsData[3].Part1 = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ADC_Handler->ChannelsData[4].Part3 = ADC_Handler->ADC_Receive();
+  ChannelsData[4].Part3 = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ADC_Handler->ChannelsData[4].Part2 = ADC_Handler->ADC_Receive();
+  ChannelsData[4].Part2 = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ADC_Handler->ChannelsData[4].Part1 = ADC_Handler->ADC_Receive();
+  ChannelsData[4].Part1 = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ADC_Handler->ChannelsData[5].Part3 = ADC_Handler->ADC_Receive();
+  ChannelsData[5].Part3 = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ADC_Handler->ChannelsData[5].Part2 = ADC_Handler->ADC_Receive();
+  ChannelsData[5].Part2 = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ADC_Handler->ChannelsData[5].Part1 = ADC_Handler->ADC_Receive();
+  ChannelsData[5].Part1 = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ADC_Handler->ChannelsData[6].Part3 = ADC_Handler->ADC_Receive();
+  ChannelsData[6].Part3 = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ADC_Handler->ChannelsData[6].Part2 = ADC_Handler->ADC_Receive();
+  ChannelsData[6].Part2 = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ADC_Handler->ChannelsData[6].Part1 = ADC_Handler->ADC_Receive();
+  ChannelsData[6].Part1 = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ADC_Handler->ChannelsData[7].Part3 = ADC_Handler->ADC_Receive();
+  ChannelsData[7].Part3 = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ADC_Handler->ChannelsData[7].Part2 = ADC_Handler->ADC_Receive();
+  ChannelsData[7].Part2 = ADC_Handler->ADC_Receive();
   Delay_US(1);
-  ADC_Handler->ChannelsData[7].Part1 = ADC_Handler->ADC_Receive();
+  ChannelsData[7].Part1 = ADC_Handler->ADC_Receive();
   Delay_US(5);
 	ADC_Handler->ADC_CS_HIGH();
-  ChSamples[0] = ADC_Handler->ChannelsData[0].INT32 / 256; 
-  ChSamples[1] = ADC_Handler->ChannelsData[1].INT32 / 256; 
-  ChSamples[2] = ADC_Handler->ChannelsData[2].INT32 / 256; 
-  ChSamples[3] = ADC_Handler->ChannelsData[3].INT32 / 256; 
-  ChSamples[4] = ADC_Handler->ChannelsData[4].INT32 / 256; 
-  ChSamples[5] = ADC_Handler->ChannelsData[5].INT32 / 256; 
-  ChSamples[6] = ADC_Handler->ChannelsData[6].INT32 / 256; 
-  ChSamples[7] = ADC_Handler->ChannelsData[7].INT32 / 256; 
+  ChSamples[0] = ChannelsData[0].INT32 / 256; 
+  ChSamples[1] = ChannelsData[1].INT32 / 256; 
+  ChSamples[2] = ChannelsData[2].INT32 / 256; 
+  ChSamples[3] = ChannelsData[3].INT32 / 256; 
+  ChSamples[4] = ChannelsData[4].INT32 / 256; 
+  ChSamples[5] = ChannelsData[5].INT32 / 256; 
+  ChSamples[6] = ChannelsData[6].INT32 / 256; 
+  ChSamples[7] = ChannelsData[7].INT32 / 256; 
 }
 
 /**
@@ -340,7 +392,7 @@ ADS131_ReadData(ADS131_Handler_t *ADC_Handler, uint8_t *State /* 3 Elements ([0]
  * @retval None
  */
 void
-ADS131_ConfigGPIO(ADS131_Handler_t *ADC_Handler,ADS131_GPIOConfig_t *GPIOConfig)
+ADS131_ConfigGPIO(ADS131_Handler *ADC_Handler,ADS131_GPIOConfig *GPIOConfig)
 {
   if((!GPIOConfig) || (!ADC_Handler))
     return;
@@ -349,7 +401,10 @@ ADS131_ConfigGPIO(ADS131_Handler_t *ADC_Handler,ADS131_GPIOConfig_t *GPIOConfig)
   
   uint8_t RegVal = (GPIOConfig->GPIO4High << 7) | (GPIOConfig->GPIO3High << 6) | (GPIOConfig->GPIO2High << 5) | (GPIOConfig->GPIO1High << 4) |(GPIOConfig->GPIO4Input << 3) | (GPIOConfig->GPIO3Input << 2) | (GPIOConfig->GPIO2Input << 1) | (GPIOConfig->GPIO1Input);
   ADS131_WriteReg(ADC_Handler,GPIO,RegVal);
+  
+  #if Debug_Enable
   PROGRAMLOG("GPIO: 0x%X\r\n",ADS131_ReadReg(ADC_Handler,GPIO));
+  #endif /* Debug_Enable */
   
   DisableRegistersInContinuousMode();
 }
@@ -361,11 +416,15 @@ ADS131_ConfigGPIO(ADS131_Handler_t *ADC_Handler,ADS131_GPIOConfig_t *GPIOConfig)
  * @retval None
  */
 void
-ADS131_ReadGPIO(ADS131_Handler_t *ADC_Handler, bool *GPIOstate /* 4 Element ([0]: GPIO1)*/)
+ADS131_ReadGPIO(ADS131_Handler *ADC_Handler, bool *GPIOstate /* 4 Element ([0]: GPIO1)*/)
 {
   EnableRegistersInContinuousMode();
   uint8_t RegVal = ADS131_ReadReg(ADC_Handler,GPIO);
+  
+  #if Debug_Enable
   PROGRAMLOG("GPIO: 0x%X\r\n",RegVal);
+  #endif /* Debug_Enable */
+  
   DisableRegistersInContinuousMode();
   GPIOstate[0] = (RegVal >> 4) & 1;
   GPIOstate[1] = (RegVal >> 5) & 1;
